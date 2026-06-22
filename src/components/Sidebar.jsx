@@ -6,6 +6,7 @@ function Sidebar({
   setActiveFriend,
   searchTerm,
   setSearchTerm,
+  currentUser,
 }) {
   const filteredFriends = friends.filter(
     (friend) =>
@@ -78,7 +79,22 @@ function Sidebar({
                   }`}
                 ></div>
 
-                <span>{friend.name}</span>
+                <div>
+  <div>{friend.name}</div>
+
+  <div className="text-xs text-slate-400">
+    {friend.online
+      ? "Online"
+      : friend.lastSeen
+      ? `Last seen ${new Date(
+          friend.lastSeen
+        ).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`
+      : "Offline"}
+  </div>
+</div>
 
               </div>
 
@@ -99,12 +115,13 @@ function Sidebar({
           <div>
 
             <p className="font-medium">
-              Raaj
-            </p>
+  {currentUser?.user_metadata?.username ||
+    currentUser?.email?.split("@")[0]}
+</p>
 
-            <p className="text-xs text-green-400">
-              Online
-            </p>
+<p className="text-xs text-green-400">
+  Online
+</p>
 
           </div>
 

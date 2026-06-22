@@ -1,16 +1,36 @@
+import { useState } from "react";
 import {
   Paperclip,
   Smile,
   Send,
 } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 
 function MessageInput({
   newMessage,
   setNewMessage,
   sendMessage,
 }) {
+  const [showEmojiPicker, setShowEmojiPicker] =
+    useState(false);
+
+  const handleEmojiClick = (emojiData) => {
+    setNewMessage(
+      (prev) => prev + emojiData.emoji
+    );
+  };
+
   return (
-    <div className="p-4 border-t border-slate-800">
+    <div className="p-4 border-t border-slate-800 relative">
+
+      {showEmojiPicker && (
+        <div className="absolute bottom-20 left-12 z-50">
+          <EmojiPicker
+            onEmojiClick={handleEmojiClick}
+            theme="dark"
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
 
@@ -18,7 +38,14 @@ function MessageInput({
           <Paperclip size={20} />
         </button>
 
-        <button className="text-slate-400 hover:text-white">
+        <button
+          onClick={() =>
+            setShowEmojiPicker(
+              !showEmojiPicker
+            )
+          }
+          className="text-slate-400 hover:text-white"
+        >
           <Smile size={20} />
         </button>
 

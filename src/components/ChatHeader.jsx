@@ -1,13 +1,30 @@
 import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../services/authService";
+import { supabase } from "../lib/supabase";
 
 function ChatHeader({ activeFriend }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logoutUser();
-    navigate("/");
-  };
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await supabase
+      .from("users")
+      .update({
+        is_online: false,
+        last_seen: new Date(),
+      })
+      .eq("id", user.id);
+  }
+
+  await logoutUser();
+
+  navigate("/");
+};
 
   return (
     <div className="h-16 border-b border-slate-800 flex items-center justify-between px-6">
@@ -16,11 +33,24 @@ function ChatHeader({ activeFriend }) {
           {activeFriend.name}
         </h2>
 
-        <p className="text-xs text-green-400">
-          {activeFriend.online
-            ? "Online"
-            : "Offline"}
-        </p>
+        <p
+  className={`text-xs ${
+    activeFriend.online
+      ? "text-green-400"
+      : "text-slate-400"
+  }`}
+>
+  {activeFriend.online
+    ? "Online"
+    : activeFriend.lastSeen
+    ? `Last seen ${new Date(
+        activeFriend.lastSeen
+      ).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
+    : "Offline"}
+</p>
       </div>
 
       <button

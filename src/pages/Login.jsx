@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
+import { supabase } from "../lib/supabase";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -9,23 +10,36 @@ function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      alert("Please enter email and password");
-      return;
-    }
+  if (!email || !password) {
+    alert("Please enter email and password");
+    return;
+  }
 
-    const { error } = await loginUser(
-      email,
-      password
-    );
+  const { error } = await loginUser(
+    email,
+    password
+  );
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
-    navigate("/chat");
-  };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await supabase
+      .from("users")
+      .update({
+        is_online: true,
+      })
+      .eq("id", user.id);
+  }
+
+  navigate("/chat");
+};
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">

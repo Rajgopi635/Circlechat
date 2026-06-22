@@ -46,10 +46,11 @@ function Chat() {
       }
 
       const formattedUsers = data.map((u) => ({
-        id: u.id,
-        name: u.username || u.email,
-        online: true,
-      }));
+  id: u.id,
+  name: u.username || u.email,
+  online: u.is_online,
+  lastSeen: u.last_seen,
+}));
 
       setFriends(formattedUsers);
 
@@ -60,8 +61,35 @@ function Chat() {
 
     loadUsers();
   }, []);
+const loadFriends = async () => {
+  if (!currentUser) return;
 
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .neq("id", currentUser.id);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const formattedUsers = data.map((u) => ({
+    id: u.id,
+    name: u.username || u.email,
+    online: u.is_online,
+    lastSeen: u.last_seen,
+  }));
+
+  setFriends(formattedUsers);
+};
   const loadMessages = async () => {
+useEffect(() => {
+  if (currentUser) {
+    loadFriends();
+  }
+}, [currentUser]);
+
   if (!activeFriend || !currentUser) return;
 
   const { data, error } = await supabase
@@ -155,6 +183,8 @@ function Chat() {
     (msg.sender_id === activeFriend?.id &&
       msg.receiver_id === currentUser?.id)
   ) {
+
+
     loadMessages();
   }
 }
@@ -168,6 +198,31 @@ function Chat() {
     };
   }, [currentUser, activeFriend]);
 
+ useEffect(() => {
+  if (!currentUser) return;
+
+  const statusChannel = supabase
+    .channel("user-status")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "users",
+      },
+      async () => {
+        console.log("🟢 USER STATUS UPDATED");
+
+        await loadFriends();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(statusChannel);
+  };
+}, [currentUser]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -177,12 +232,13 @@ function Chat() {
   return (
     <div className="h-screen flex bg-slate-950 text-white">
       <Sidebar
-        friends={friends}
-        activeFriend={activeFriend}
-        setActiveFriend={setActiveFriend}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-      />
+  friends={friends}
+  activeFriend={activeFriend}
+  setActiveFriend={setActiveFriend}
+  searchTerm={searchTerm}
+  setSearchTerm={setSearchTerm}
+  currentUser={currentUser}
+/>
 
       <div className="flex-1 flex flex-col">
         {activeFriend && (
