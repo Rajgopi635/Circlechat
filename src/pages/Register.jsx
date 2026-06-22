@@ -1,10 +1,38 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { registerUser } from "../services/authService";
 
 function Register() {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const navigate = useNavigate();
+
+  const handleRegister = async () => {
+    if (!email || !password) {
+      alert("Please enter email and password");
+      return;
+    }
+
+    const { error } = await registerUser(
+  email,
+  password,
+  username
+);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Registration Successful! Please Login.");
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
-
         <div className="text-center mb-8">
           <h1 className="text-white text-4xl font-bold">
             CircleChat
@@ -16,7 +44,6 @@ function Register() {
         </div>
 
         <form className="space-y-5">
-
           <div>
             <label className="text-slate-300 text-sm block mb-2">
               Username
@@ -25,6 +52,8 @@ function Register() {
             <input
               type="text"
               placeholder="Choose a username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none focus:border-blue-500"
             />
           </div>
@@ -37,6 +66,8 @@ function Register() {
             <input
               type="email"
               placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none focus:border-blue-500"
             />
           </div>
@@ -49,17 +80,19 @@ function Register() {
             <input
               type="password"
               placeholder="Create password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none focus:border-blue-500"
             />
           </div>
 
           <button
             type="button"
+            onClick={handleRegister}
             className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition"
           >
             Create Account
           </button>
-
         </form>
 
         <div className="text-center mt-6">
@@ -74,7 +107,6 @@ function Register() {
             Login
           </Link>
         </div>
-
       </div>
     </div>
   );

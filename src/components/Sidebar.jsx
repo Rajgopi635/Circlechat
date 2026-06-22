@@ -64,7 +64,7 @@ function Sidebar({
                   setActiveFriend(friend)
                 }
                 className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${
-                  activeFriend.id === friend.id
+                  activeFriend?.id === friend.id
                     ? "bg-blue-600 shadow-lg shadow-blue-500/30"
                     : "bg-slate-800 hover:bg-slate-700"
                 }`}

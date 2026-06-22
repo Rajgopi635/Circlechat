@@ -6,27 +6,11 @@ import ChatHeader from "../components/ChatHeader";
 import MessageInput from "../components/MessageInput";
 import MessageList from "../components/MessageList";
 import Sidebar from "../components/Sidebar";
+import { supabase } from "../lib/supabase";
 
 function Chat() {
-  const friends = [
-    {
-      id: 1,
-      name: "John Doe",
-      online: true,
-    },
-
-    {
-      id: 2,
-      name: "Alex Smith",
-      online: false,
-    },
-
-    {
-      id: 3,
-      name: "Sarah Wilson",
-      online: true,
-    },
-  ];
+  
+  const [friends, setFriends] = useState([]);
 
   const initialMessages = {
     1: [
@@ -79,7 +63,7 @@ function Chat() {
   };
 
   const [activeFriend, setActiveFriend] =
-    useState(friends[0]);
+  useState(null);
     const [chatMessages, setChatMessages] =
   useState(initialMessages);
 
@@ -90,6 +74,38 @@ const [newMessage, setNewMessage] =
   useState("");
 
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+  const loadUsers = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .neq("id", user.id);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const formattedUsers = data.map((u) => ({
+      id: u.id,
+      name: u.username || u.email,
+      online: true,
+    }));
+
+    setFriends(formattedUsers);
+
+    if (formattedUsers.length > 0) {
+      setActiveFriend(formattedUsers[0]);
+    }
+  };
+
+  loadUsers();
+}, []);
 
 const filteredFriends = friends.filter(
   (friend) =>
@@ -114,9 +130,9 @@ const sendMessage = () => {
   setChatMessages({
     ...chatMessages,
     [activeFriend.id]: [
-      ...chatMessages[activeFriend.id],
-      newMsg,
-    ],
+  ...(chatMessages[activeFriend.id] || []),
+  newMsg,
+],
   });
 
   setNewMessage("");
@@ -143,19 +159,25 @@ useEffect(() => {
 
       <div className="flex-1 flex flex-col">
 
-        <ChatHeader activeFriend={activeFriend} />
+        {activeFriend && (
+  <ChatHeader activeFriend={activeFriend} />
+)}
 
-        <MessageList
-  activeFriend={activeFriend}
-  chatMessages={chatMessages}
-  messagesEndRef={messagesEndRef}
-/>
+        {activeFriend && (
+  <MessageList
+    activeFriend={activeFriend}
+    chatMessages={chatMessages}
+    messagesEndRef={messagesEndRef}
+  />
+)}
 
-        <MessageInput
-  newMessage={newMessage}
-  setNewMessage={setNewMessage}
-  sendMessage={sendMessage}
-/>
+        {activeFriend && (
+  <MessageInput
+    newMessage={newMessage}
+    setNewMessage={setNewMessage}
+    sendMessage={sendMessage}
+  />
+)}
 
       </div>
 
