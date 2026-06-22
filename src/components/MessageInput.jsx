@@ -1,67 +1,53 @@
-function MessageList({
-  activeFriend,
-  chatMessages,
-  messagesEndRef,
-  currentUser,
+import {
+  Paperclip,
+  Smile,
+  Send,
+} from "lucide-react";
+
+function MessageInput({
+  newMessage,
+  setNewMessage,
+  sendMessage,
 }) {
-  const messages =
-    chatMessages[activeFriend?.id] || [];
-
   return (
-    <div className="flex-1 p-6 overflow-y-auto">
-      <div className="space-y-4">
+    <div className="p-4 border-t border-slate-800">
 
-        {messages.map((message) => {
+      <div className="flex items-center gap-3">
 
-          const isMe =
-            message.sender_id === currentUser?.id;
+        <button className="text-slate-400 hover:text-white">
+          <Paperclip size={20} />
+        </button>
 
-          return (
-            <div
-              key={message.id}
-              className={
-                isMe
-                  ? "flex justify-end"
-                  : "flex"
-              }
-            >
-              <div>
+        <button className="text-slate-400 hover:text-white">
+          <Smile size={20} />
+        </button>
 
-                <div
-                  className={`text-xs text-slate-500 mb-1 ${
-                    isMe
-                      ? "text-right"
-                      : ""
-                  }`}
-                >
-                  {new Date(
-                    message.created_at
-                  ).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) =>
+            setNewMessage(e.target.value)
+          }
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              sendMessage();
+            }
+          }}
+          placeholder="Type a message..."
+          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none"
+        />
 
-                <div
-                  className={`px-4 py-3 rounded-xl ${
-                    isMe
-                      ? "bg-blue-600"
-                      : "bg-slate-800"
-                  }`}
-                >
-                  {message.message_text}
-                </div>
-
-              </div>
-            </div>
-          );
-        })}
-
-        <div ref={messagesEndRef}></div>
+        <button
+          onClick={sendMessage}
+          className="bg-blue-600 p-3 rounded-lg hover:bg-blue-700"
+        >
+          <Send size={20} />
+        </button>
 
       </div>
+
     </div>
   );
 }
 
-export default MessageList;
+export default MessageInput;

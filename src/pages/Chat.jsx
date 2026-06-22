@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 
-// Remove this entire lucide-react import
-
 import ChatHeader from "../components/ChatHeader";
 import MessageInput from "../components/MessageInput";
 import MessageList from "../components/MessageList";
@@ -9,178 +7,204 @@ import Sidebar from "../components/Sidebar";
 import { supabase } from "../lib/supabase";
 
 function Chat() {
-  
   const [friends, setFriends] = useState([]);
+  const [activeFriend, setActiveFriend] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const initialMessages = {
-    1: [
-      {
-        id: 1,
-        text: "Hello 👋",
-        sender: "friend",
-        time: "10:25 AM",
-      },
-
-      {
-        id: 2,
-        text: "How are you?",
-        sender: "friend",
-        time: "10:26 AM",
-      },
-    ],
-
-    2: [
-      {
-        id: 1,
-        text: "Are you free today?",
-        sender: "friend",
-        time: "11:00 AM",
-      },
-
-      {
-        id: 2,
-        text: "Let's catch up.",
-        sender: "friend",
-        time: "11:02 AM",
-      },
-    ],
-
-    3: [
-      {
-        id: 1,
-        text: "Meeting at 5 PM?",
-        sender: "friend",
-        time: "09:15 AM",
-      },
-
-      {
-        id: 2,
-        text: "Don't forget 😄",
-        sender: "friend",
-        time: "09:16 AM",
-      },
-    ],
-  };
-
-  const [activeFriend, setActiveFriend] =
-  useState(null);
-    const [chatMessages, setChatMessages] =
-  useState(initialMessages);
-
-const [newMessage, setNewMessage] =
-  useState("");
-
-  const [searchTerm, setSearchTerm] =
-  useState("");
+  const [chatMessages, setChatMessages] = useState({});
+  const [newMessage, setNewMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-  const loadUsers = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  console.log("========== CURRENT USER ==========");
+  console.log(currentUser);
 
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .neq("id", user.id);
+  console.log("========== ACTIVE FRIEND ==========");
+  console.log(activeFriend);
+}, [currentUser, activeFriend]);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      setCurrentUser(user);
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .neq("id", user.id);
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const formattedUsers = data.map((u) => ({
+        id: u.id,
+        name: u.username || u.email,
+        online: true,
+      }));
+
+      setFriends(formattedUsers);
+
+      if (formattedUsers.length > 0) {
+        setActiveFriend(formattedUsers[0]);
+      }
+    };
+
+    loadUsers();
+  }, []);
+
+  const loadMessages = async () => {
+  if (!activeFriend || !currentUser) return;
+
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const filtered = data.filter(
+    (msg) =>
+      (msg.sender_id === currentUser.id &&
+        msg.receiver_id === activeFriend.id) ||
+      (msg.sender_id === activeFriend.id &&
+        msg.receiver_id === currentUser.id)
+  );
+
+  const formatted = filtered.map((msg) => ({
+    id: msg.id,
+    text: msg.message_text,
+    sender:
+      msg.sender_id === currentUser.id
+        ? "me"
+        : "friend",
+    time: new Date(msg.created_at).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  }));
+
+  setChatMessages({
+    [activeFriend.id]: formatted,
+  });
+};
+
+  useEffect(() => {
+    loadMessages();
+  }, [activeFriend, currentUser]);
+
+  const sendMessage = async () => {
+    if (
+      !newMessage.trim() ||
+      !activeFriend ||
+      !currentUser
+    )
+      return;
+
+    const { error } = await supabase
+      .from("messages")
+      .insert([
+        {
+          sender_id: currentUser.id,
+          receiver_id: activeFriend.id,
+          message_text: newMessage,
+        },
+      ]);
 
     if (error) {
       console.error(error);
       return;
     }
 
-    const formattedUsers = data.map((u) => ({
-      id: u.id,
-      name: u.username || u.email,
-      online: true,
-    }));
-
-    setFriends(formattedUsers);
-
-    if (formattedUsers.length > 0) {
-      setActiveFriend(formattedUsers[0]);
-    }
+    setNewMessage("");
+    loadMessages();
   };
 
-  loadUsers();
-}, []);
+  useEffect(() => {
+    if (!currentUser) return;
 
-const filteredFriends = friends.filter(
-  (friend) =>
-    friend.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-);
+    const channel = supabase
+  .channel("chat-room")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "messages",
+    },
+    (payload) => {
+  console.log("🔥 REALTIME RECEIVED");
+  console.log(payload);
 
-const sendMessage = () => {
-  if (!newMessage.trim()) return;
+  const msg = payload.new;
 
-  const newMsg = {
-    id: Date.now(),
-    text: newMessage,
-    sender: "me",
-    time: new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-
-  setChatMessages({
-    ...chatMessages,
-    [activeFriend.id]: [
-  ...(chatMessages[activeFriend.id] || []),
-  newMsg,
-],
+  if (
+    (msg.sender_id === currentUser?.id &&
+      msg.receiver_id === activeFriend?.id) ||
+    (msg.sender_id === activeFriend?.id &&
+      msg.receiver_id === currentUser?.id)
+  ) {
+    loadMessages();
+  }
+}
+  )
+  .subscribe((status) => {
+    console.log("CHANNEL STATUS:", status);
   });
 
-  setNewMessage("");
-};
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser, activeFriend]);
 
-useEffect(() => {
-  messagesEndRef.current?.scrollIntoView({
-    behavior: "smooth",
-  });
-}, [chatMessages, activeFriend]);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [chatMessages]);
 
   return (
     <div className="h-screen flex bg-slate-950 text-white">
-
       <Sidebar
-  friends={friends}
-  activeFriend={activeFriend}
-  setActiveFriend={setActiveFriend}
-  searchTerm={searchTerm}
-  setSearchTerm={setSearchTerm}
-/>
-
-      {/* Chat Area */}
+        friends={friends}
+        activeFriend={activeFriend}
+        setActiveFriend={setActiveFriend}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+      />
 
       <div className="flex-1 flex flex-col">
+        {activeFriend && (
+          <ChatHeader activeFriend={activeFriend} />
+        )}
 
         {activeFriend && (
-  <ChatHeader activeFriend={activeFriend} />
-)}
+          <MessageList
+            activeFriend={activeFriend}
+            chatMessages={chatMessages}
+            messagesEndRef={messagesEndRef}
+          />
+        )}
 
         {activeFriend && (
-  <MessageList
-    activeFriend={activeFriend}
-    chatMessages={chatMessages}
-    messagesEndRef={messagesEndRef}
-  />
-)}
-
-        {activeFriend && (
-  <MessageInput
-    newMessage={newMessage}
-    setNewMessage={setNewMessage}
-    sendMessage={sendMessage}
-  />
-)}
-
+          <MessageInput
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            sendMessage={sendMessage}
+          />
+        )}
       </div>
-
     </div>
   );
 }
