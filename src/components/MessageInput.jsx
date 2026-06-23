@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Paperclip,
   Smile,
   Send,
 } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
+import { supabase } from "../lib/supabase";
 
 function MessageInput({
   newMessage,
   setNewMessage,
   sendMessage,
+  currentUser,
+  activeFriend,
 }) {
+
   const [showEmojiPicker, setShowEmojiPicker] =
     useState(false);
+
+  const typingTimeout = useRef(null);
 
   const handleEmojiClick = (emojiData) => {
     setNewMessage(
@@ -52,9 +58,42 @@ function MessageInput({
         <input
           type="text"
           value={newMessage}
-          onChange={(e) =>
-            setNewMessage(e.target.value)
-          }
+          onChange={async (e) => {
+
+            console.log("TYPING STARTED");
+
+  setNewMessage(e.target.value);
+
+  if (!currentUser || !activeFriend)
+    return;
+
+  const { data, error } = await supabase
+  .from("typing_status")
+  .upsert({
+    user_id: currentUser.id,
+    receiver_id: activeFriend.id,
+    is_typing: true,
+  });
+
+console.log("TYPING RESPONSE");
+console.log(data);
+console.log(error);
+
+clearTimeout(typingTimeout.current);
+
+ typingTimeout.current = setTimeout(
+    async () => {
+      await supabase
+        .from("typing_status")
+        .upsert({
+          user_id: currentUser.id,
+          receiver_id: activeFriend.id,
+          is_typing: false,
+        });
+    },
+    2000
+  );
+}}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               sendMessage();

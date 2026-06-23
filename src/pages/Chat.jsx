@@ -14,6 +14,10 @@ function Chat() {
   const [chatMessages, setChatMessages] = useState({});
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [unreadCounts, setUnreadCounts] = useState({});
+  
+  useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -83,13 +87,42 @@ const loadFriends = async () => {
 
   setFriends(formattedUsers);
 };
-  const loadMessages = async () => {
+
 useEffect(() => {
   if (currentUser) {
     loadFriends();
   }
 }, [currentUser]);
 
+useEffect(() => {
+  loadUnreadCounts();
+}, [currentUser]);
+
+const loadUnreadCounts = async () => {
+  if (!currentUser) return;
+
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("receiver_id", currentUser.id)
+    .eq("is_read", false);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const counts = {};
+
+  data.forEach((msg) => {
+    counts[msg.sender_id] =
+      (counts[msg.sender_id] || 0) + 1;
+  });
+
+  setUnreadCounts(counts);
+};
+
+ const loadMessages = async () => {
   if (!activeFriend || !currentUser) return;
 
   const { data, error } = await supabase
@@ -160,6 +193,25 @@ useEffect(() => {
   };
 
   useEffect(() => {
+  const markMessagesAsRead = async () => {
+    if (!activeFriend || !currentUser) return;
+
+    await supabase
+      .from("messages")
+      .update({
+        is_read: true,
+      })
+      .eq("sender_id", activeFriend.id)
+      .eq("receiver_id", currentUser.id)
+      .eq("is_read", false);
+
+    loadUnreadCounts();
+  };
+
+  markMessagesAsRead();
+}, [activeFriend, currentUser]);
+
+  useEffect(() => {
     if (!currentUser) return;
 
     const channel = supabase
@@ -186,6 +238,7 @@ useEffect(() => {
 
 
     loadMessages();
+loadUnreadCounts();
   }
 }
   )
@@ -223,6 +276,36 @@ useEffect(() => {
   };
 }, [currentUser]);
 
+useEffect(() => {
+  if (!currentUser || !activeFriend) return;
+
+  const typingChannel = supabase
+    .channel("typing-indicator")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "typing_status",
+      },
+      (payload) => {
+        const row = payload.new;
+
+        if (
+          row.user_id === activeFriend.id &&
+          row.receiver_id === currentUser.id
+        ) {
+          setIsTyping(row.is_typing);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(typingChannel);
+  };
+}, [currentUser, activeFriend]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -233,6 +316,7 @@ useEffect(() => {
     <div className="h-screen flex bg-slate-950 text-white">
       <Sidebar
   friends={friends}
+  unreadCounts={unreadCounts}
   activeFriend={activeFriend}
   setActiveFriend={setActiveFriend}
   searchTerm={searchTerm}
@@ -253,12 +337,20 @@ useEffect(() => {
           />
         )}
 
+        {isTyping && (
+  <div className="px-6 py-2 text-sm text-green-400 italic">
+    {activeFriend.name} is typing...
+  </div>
+)}
+
         {activeFriend && (
           <MessageInput
-            newMessage={newMessage}
-            setNewMessage={setNewMessage}
-            sendMessage={sendMessage}
-          />
+  newMessage={newMessage}
+  setNewMessage={setNewMessage}
+  sendMessage={sendMessage}
+  currentUser={currentUser}
+  activeFriend={activeFriend}
+/>
         )}
       </div>
     </div>

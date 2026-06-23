@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 
 function Sidebar({
   friends,
+  unreadCounts,
   activeFriend,
   setActiveFriend,
   searchTerm,
@@ -80,7 +81,15 @@ function Sidebar({
                 ></div>
 
                 <div>
-  <div>{friend.name}</div>
+  <div className="flex items-center gap-2">
+    <span>{friend.name}</span>
+
+    {unreadCounts?.[friend.id] > 0 && (
+      <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+        {unreadCounts[friend.id]}
+      </span>
+    )}
+  </div>
 
   <div className="text-xs text-slate-400">
     {friend.online
