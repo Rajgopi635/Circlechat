@@ -69,6 +69,7 @@ if (currentUserData) {
   name: u.username || u.email,
   online: u.is_online,
   lastSeen: u.last_seen,
+  avatar_url: u.avatar_url,
 }));
 
       setFriends(formattedUsers);
@@ -91,11 +92,12 @@ const loadFriends = async () => {
   }
 
   const formattedUsers = data.map((u) => ({
-    id: u.id,
-    name: u.username || u.email,
-    online: u.is_online,
-    lastSeen: u.last_seen,
-  }));
+  id: u.id,
+  name: u.username || u.email,
+  online: u.is_online,
+  lastSeen: u.last_seen,
+  avatar_url: u.avatar_url,
+}));
 
   setFriends(formattedUsers);
 };

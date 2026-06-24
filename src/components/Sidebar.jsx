@@ -76,13 +76,26 @@ function Sidebar({
                 }`}
               >
 
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    friend.online
-                      ? "bg-green-500"
-                      : "bg-slate-500"
-                  }`}
-                ></div>
+                <div className="relative">
+
+  <img
+    src={
+      friend.avatar_url ||
+      "https://placehold.co/80x80"
+    }
+    alt={friend.name}
+    className="w-10 h-10 rounded-full object-cover"
+  />
+
+  <div
+    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-slate-900 ${
+      friend.online
+        ? "bg-green-500"
+        : "bg-slate-500"
+    }`}
+  />
+
+</div>
 
                 <div>
   <div className="flex items-center gap-2">
