@@ -126,11 +126,14 @@ function Sidebar({
     className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition"
   >
 
-    <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center">
-
-      <User size={22} />
-
-    </div>
+    <img
+  src={
+    currentUser?.avatar_url ||
+    "https://placehold.co/100x100"
+  }
+  alt="Profile"
+  className="w-12 h-12 rounded-full object-cover border-2 border-slate-600"
+/>
 
     <div className="text-left">
 
