@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../services/authService";
 import { supabase } from "../lib/supabase";
 
@@ -55,13 +55,7 @@ function ChatHeader({ activeFriend }) {
 
       <div className="flex gap-3">
 
-  <Link
-    to="/settings"
-    className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-medium transition"
-  >
-    Settings
-  </Link>
-
+  
   <button
     onClick={handleLogout}
     className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium transition"

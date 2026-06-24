@@ -4,6 +4,7 @@ import ChatHeader from "../components/ChatHeader";
 import MessageInput from "../components/MessageInput";
 import MessageList from "../components/MessageList";
 import Sidebar from "../components/Sidebar";
+import WelcomeScreen from "../components/WelcomeScreen";
 import { supabase } from "../lib/supabase";
 
 function Chat() {
@@ -37,7 +38,21 @@ function Chat() {
 
       if (!user) return;
 
-      setCurrentUser(user);
+   const { data: currentUserData } =
+  await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+if (currentUserData) {
+  setCurrentUser({
+    ...user,
+    avatar_url: currentUserData.avatar_url,
+    username: currentUserData.username,
+    full_name: currentUserData.full_name,
+  });
+}
 
       const { data, error } = await supabase
         .from("users")
@@ -57,10 +72,7 @@ function Chat() {
 }));
 
       setFriends(formattedUsers);
-
-      if (formattedUsers.length > 0) {
-        setActiveFriend(formattedUsers[0]);
-      }
+      setActiveFriend(null);
     };
 
     loadUsers();
@@ -325,34 +337,36 @@ useEffect(() => {
 />
 
       <div className="flex-1 flex flex-col">
-        {activeFriend && (
-          <ChatHeader activeFriend={activeFriend} />
-        )}
 
-        {activeFriend && (
-          <MessageList
-            activeFriend={activeFriend}
-            chatMessages={chatMessages}
-            messagesEndRef={messagesEndRef}
-          />
-        )}
+  {!activeFriend ? (
+    <WelcomeScreen />
+  ) : (
+    <>
+      <ChatHeader activeFriend={activeFriend} />
 
-        {isTyping && (
-  <div className="px-6 py-2 text-sm text-green-400 italic">
-    {activeFriend.name} is typing...
-  </div>
-)}
+      <MessageList
+        activeFriend={activeFriend}
+        chatMessages={chatMessages}
+        messagesEndRef={messagesEndRef}
+      />
 
-        {activeFriend && (
-          <MessageInput
-  newMessage={newMessage}
-  setNewMessage={setNewMessage}
-  sendMessage={sendMessage}
-  currentUser={currentUser}
-  activeFriend={activeFriend}
-/>
-        )}
-      </div>
+      {isTyping && (
+        <div className="px-6 py-2 text-sm text-green-400 italic">
+          {activeFriend.name} is typing...
+        </div>
+      )}
+
+      <MessageInput
+        newMessage={newMessage}
+        setNewMessage={setNewMessage}
+        sendMessage={sendMessage}
+        currentUser={currentUser}
+        activeFriend={activeFriend}
+      />
+    </>
+  )}
+
+</div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { Search } from "lucide-react";
+import { Search, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function Sidebar({
   friends,
@@ -9,6 +10,9 @@ function Sidebar({
   setSearchTerm,
   currentUser,
 }) {
+
+  const navigate = useNavigate();
+
   const filteredFriends = friends.filter(
     (friend) =>
       friend.name
@@ -115,28 +119,35 @@ function Sidebar({
 
       </div>
 
-      <div className="p-4 border-t border-slate-800">
+<div className="p-4 border-t border-slate-800">
 
-        <div className="flex items-center gap-3">
+  <button
+    onClick={() => navigate("/profile")}
+    className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition"
+  >
 
-          <div className="w-10 h-10 rounded-full bg-blue-600"></div>
+    <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center">
 
-          <div>
+      <User size={22} />
 
-            <p className="font-medium">
-  {currentUser?.user_metadata?.username ||
-    currentUser?.email?.split("@")[0]}
-</p>
+    </div>
 
-<p className="text-xs text-green-400">
-  Online
-</p>
+    <div className="text-left">
 
-          </div>
+      <p className="font-medium">
+        {currentUser?.user_metadata?.username ||
+          currentUser?.email?.split("@")[0]}
+      </p>
 
-        </div>
+      <p className="text-xs text-green-400">
+        View Profile
+      </p>
 
-      </div>
+    </div>
+
+  </button>
+
+</div>
 
     </div>
   );
