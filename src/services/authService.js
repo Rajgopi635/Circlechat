@@ -1,35 +1,49 @@
 import { supabase } from "../lib/supabase";
 
+// ==========================
+// Register User
+// ==========================
 export const registerUser = async (
   email,
   password,
   username
 ) => {
-  const { data, error } =
-    await supabase.auth.signUp({
-      email,
-      password,
-    });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
 
   if (error) {
     return { data, error };
   }
 
   if (data?.user) {
-    await supabase.from("users").insert([
-      {
-        id: data.user.id,
-        username:
-          username ||
-          email.split("@")[0],
-        email: email,
-      },
-    ]);
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert([
+        {
+          id: data.user.id,
+          email: email,
+          username: username || email.split("@")[0],
+          full_name: username || email.split("@")[0],
+          avatar_url: "",
+          bio: "",
+          is_online: true,
+          last_seen: new Date().toISOString(),
+        },
+      ]);
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError);
+    }
   }
 
   return { data, error };
 };
 
+// ==========================
+// Login User
+// ==========================
 export const loginUser = async (
   email,
   password
@@ -42,9 +56,10 @@ export const loginUser = async (
 
   if (!error && data?.user) {
     await supabase
-      .from("users")
+      .from("profiles")
       .update({
         is_online: true,
+        last_seen: new Date().toISOString(),
       })
       .eq("id", data.user.id);
   }
@@ -52,6 +67,9 @@ export const loginUser = async (
   return { data, error };
 };
 
+// ==========================
+// Logout User
+// ==========================
 export const logoutUser = async () => {
   const {
     data: { user },
@@ -59,10 +77,10 @@ export const logoutUser = async () => {
 
   if (user) {
     await supabase
-      .from("users")
+      .from("profiles")
       .update({
         is_online: false,
-        last_seen: new Date(),
+        last_seen: new Date().toISOString(),
       })
       .eq("id", user.id);
   }

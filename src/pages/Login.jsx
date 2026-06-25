@@ -15,30 +15,24 @@ function Login() {
     return;
   }
 
-  const { error } = await loginUser(
-    email,
-    password
-  );
+  const { data, error } = await loginUser(email, password);
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
+if (error) {
+  alert(error.message);
+  return;
+}
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+if (data?.user) {
+  await supabase
+    .from("profiles")
+    .update({
+      is_online: true,
+      last_seen: new Date().toISOString(),
+    })
+    .eq("id", data.user.id);
+}
 
-  if (user) {
-    await supabase
-      .from("users")
-      .update({
-        is_online: true,
-      })
-      .eq("id", user.id);
-  }
-
-  navigate("/chat");
+navigate("/");
 };
 
   return (

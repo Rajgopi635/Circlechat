@@ -15,19 +15,20 @@ function Register() {
       return;
     }
 
-    const { error } = await registerUser(
+ const { data, error } = await registerUser(
   email,
   password,
   username
 );
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+if (error) {
+  alert(error.message);
+  return;
+}
 
-    alert("Registration Successful! Please Login.");
-    navigate("/");
+alert("Registration successful!");
+
+navigate("/login");
   };
 
   return (
