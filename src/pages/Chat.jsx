@@ -17,6 +17,9 @@ function Chat() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState({});
+
+  const [mobileSidebarOpen, setMobileSidebarOpen] =
+  useState(false);
   
   useState(false);
 
@@ -158,17 +161,22 @@ const loadUnreadCounts = async () => {
   );
 
   const formatted = filtered.map((msg) => ({
-    id: msg.id,
-    text: msg.message_text,
-    sender:
-      msg.sender_id === currentUser.id
-        ? "me"
-        : "friend",
-    time: new Date(msg.created_at).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  }));
+  id: msg.id,
+  text: msg.message_text,
+  sender:
+    msg.sender_id === currentUser.id
+      ? "me"
+      : "friend",
+  time: new Date(msg.created_at).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
+  is_read: msg.is_read,
+
+  message_type: msg.message_type || "text",
+  file_url: msg.file_url,
+  file_name: msg.file_name,
+}));
 
   setChatMessages({
     [activeFriend.id]: formatted,
@@ -181,6 +189,26 @@ const loadUnreadCounts = async () => {
 
 const handleFriendSelect = async (friend) => {
   setActiveFriend(friend);
+
+  setMobileSidebarOpen(false);
+
+  if (!currentUser) return;
+
+  await supabase
+    .from("messages")
+    .update({
+      is_read: true,
+    })
+    .eq("sender_id", friend.id)
+    .eq("receiver_id", currentUser.id)
+    .eq("is_read", false);
+
+  setUnreadCounts((prev) => ({
+    ...prev,
+    [friend.id]: 0,
+  }));
+
+  loadUnreadCounts();
 
   if (!currentUser) return;
 
@@ -384,6 +412,8 @@ useEffect(() => {
   searchTerm={searchTerm}
   setSearchTerm={setSearchTerm}
   currentUser={currentUser}
+  mobileSidebarOpen={mobileSidebarOpen}
+  setMobileSidebarOpen={setMobileSidebarOpen}
 />
 
       <div className="flex-1 flex flex-col">
