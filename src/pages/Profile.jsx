@@ -99,13 +99,24 @@ const handleAvatarUpload = async (
   setLoading(false);
 
   if (error) {
-    alert(error.message);
-    return;
-  }
+  alert(error.message);
+  return;
+}
 
-  alert("Profile Updated Successfully");
+// Save latest profile locally
+localStorage.setItem(
+  "circlechat_user",
+  JSON.stringify({
+    username,
+    full_name: fullName,
+    email,
+    avatar_url: avatarUrl,
+  })
+);
 
-  navigate("/chat");
+alert("Profile Updated Successfully");
+
+navigate("/chat");
 };
 
 const handleLogout = async () => {

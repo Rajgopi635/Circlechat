@@ -34,12 +34,38 @@ export const loginUser = async (
   email,
   password
 ) => {
-  return await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const { data, error } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+  if (!error && data?.user) {
+    await supabase
+      .from("users")
+      .update({
+        is_online: true,
+      })
+      .eq("id", data.user.id);
+  }
+
+  return { data, error };
 };
 
 export const logoutUser = async () => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await supabase
+      .from("users")
+      .update({
+        is_online: false,
+        last_seen: new Date(),
+      })
+      .eq("id", user.id);
+  }
+
   return await supabase.auth.signOut();
 };

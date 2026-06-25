@@ -1,9 +1,20 @@
+import { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 
 function WelcomeScreen() {
   const navigate = useNavigate();
+
+  const [user, setUser] = useState(null);
+
+useEffect(() => {
+  const savedUser = localStorage.getItem("circlechat_user");
+
+  if (savedUser) {
+    setUser(JSON.parse(savedUser));
+  }
+}, []);
 
   const handleLogout = async () => {
   await supabase.auth.signOut();
@@ -25,13 +36,26 @@ function WelcomeScreen() {
 
       <div className="text-center max-w-lg px-6">
 
-        <div className="text-8xl mb-6">
-          💬
-        </div>
+        <div className="mb-6 flex justify-center">
 
-        <h1 className="text-4xl font-bold text-white mb-4">
-          Welcome to CircleChat
-        </h1>
+  <img
+    src={
+      user?.avatar_url ||
+      "https://placehold.co/120x120"
+    }
+    alt="Profile"
+    className="w-28 h-28 rounded-full object-cover border-4 border-blue-500"
+  />
+
+</div>
+
+        <h1 className="text-4xl font-bold text-white mb-2">
+  Welcome to CircleChat
+</h1>
+
+<p className="text-blue-400 text-xl font-semibold mb-4">
+  {user?.full_name || user?.username || "User"}
+</p>
 
         <p className="text-slate-400 text-lg mb-8">
           Stay connected with your friends in real-time.

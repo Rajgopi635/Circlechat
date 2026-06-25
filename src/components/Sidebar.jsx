@@ -66,9 +66,9 @@ function Sidebar({
 
               <div
                 key={friend.id}
-                onClick={() =>
-                  setActiveFriend(friend)
-                }
+                onClick={() => {
+  setActiveFriend(friend);
+}}
                 className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${
                   activeFriend?.id === friend.id
                     ? "bg-blue-600 shadow-lg shadow-blue-500/30"
@@ -151,8 +151,8 @@ function Sidebar({
     <div className="text-left">
 
       <p className="font-medium">
-        {currentUser?.user_metadata?.username ||
-          currentUser?.email?.split("@")[0]}
+        {currentUser?.username ||
+  currentUser?.email?.split("@")[0]}
       </p>
 
       <p className="text-xs text-green-400">

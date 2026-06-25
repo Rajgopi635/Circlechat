@@ -179,6 +179,28 @@ const loadUnreadCounts = async () => {
     loadMessages();
   }, [activeFriend, currentUser]);
 
+const handleFriendSelect = async (friend) => {
+  setActiveFriend(friend);
+
+  if (!currentUser) return;
+
+  await supabase
+    .from("messages")
+    .update({
+      is_read: true,
+    })
+    .eq("sender_id", friend.id)
+    .eq("receiver_id", currentUser.id)
+    .eq("is_read", false);
+
+  setUnreadCounts((prev) => ({
+    ...prev,
+    [friend.id]: 0,
+  }));
+
+  loadUnreadCounts();
+};
+
   const sendMessage = async () => {
     if (
       !newMessage.trim() ||
@@ -291,6 +313,32 @@ loadUnreadCounts();
 }, [currentUser]);
 
 useEffect(() => {
+  if (!currentUser) return;
+
+  const handleBeforeUnload = async () => {
+    await supabase
+      .from("users")
+      .update({
+        is_online: false,
+        last_seen: new Date(),
+      })
+      .eq("id", currentUser.id);
+  };
+
+  window.addEventListener(
+    "beforeunload",
+    handleBeforeUnload
+  );
+
+  return () => {
+    window.removeEventListener(
+      "beforeunload",
+      handleBeforeUnload
+    );
+  };
+}, [currentUser]);
+
+useEffect(() => {
   if (!currentUser || !activeFriend) return;
 
   const typingChannel = supabase
@@ -332,7 +380,7 @@ useEffect(() => {
   friends={friends}
   unreadCounts={unreadCounts}
   activeFriend={activeFriend}
-  setActiveFriend={setActiveFriend}
+  setActiveFriend={handleFriendSelect}
   searchTerm={searchTerm}
   setSearchTerm={setSearchTerm}
   currentUser={currentUser}
