@@ -19,7 +19,7 @@ export const registerUser = async (
 
   if (data?.user) {
     const { error: profileError } = await supabase
-      .from("profiles")
+      .from("users")
       .insert([
         {
           id: data.user.id,
@@ -56,7 +56,7 @@ export const loginUser = async (
 
   if (!error && data?.user) {
     await supabase
-      .from("profiles")
+      .from("users")
       .update({
         is_online: true,
         last_seen: new Date().toISOString(),
@@ -77,7 +77,7 @@ export const logoutUser = async () => {
 
   if (user) {
     await supabase
-      .from("profiles")
+      .from("users")
       .update({
         is_online: false,
         last_seen: new Date().toISOString(),

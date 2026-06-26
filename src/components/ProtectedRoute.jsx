@@ -12,12 +12,16 @@ function ProtectedRoute({ children }) {
         data: { session },
       } = await supabase.auth.getSession();
 
+      console.log("SESSION OBJECT:", session);
+
       setSession(session);
       setLoading(false);
     };
 
     getSession();
   }, []);
+
+  console.log("CURRENT SESSION STATE:", session);
 
   if (loading) {
     return (
@@ -28,8 +32,11 @@ function ProtectedRoute({ children }) {
   }
 
   if (!session) {
+    console.log("❌ No session found. Redirecting to Login...");
     return <Navigate to="/" replace />;
   }
+
+  console.log("✅ Session found. Opening protected page...");
 
   return children;
 }
