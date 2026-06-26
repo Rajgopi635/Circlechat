@@ -18,7 +18,10 @@ useEffect(() => {
 
   const handleLogout = async () => {
   await supabase.auth.signOut();
-  navigate("/login");
+
+  localStorage.removeItem("circlechat_user");
+
+  navigate("/", { replace: true });
 };
 
   return (

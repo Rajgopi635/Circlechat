@@ -28,7 +28,7 @@ if (error) {
 
 alert("Registration successful!");
 
-navigate("/login");
+navigate("/");
   };
 
   return (
