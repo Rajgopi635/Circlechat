@@ -91,6 +91,16 @@ function Login() {
             />
           </div>
 
+          {/* Forgot Password */}
+          <div className="flex justify-end -mt-2">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-500 hover:text-blue-400 transition"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
